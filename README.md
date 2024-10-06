@@ -1,3 +1,3 @@
 # tic-tac-toe
-Simple React app
+# Simple React app
 Run in browser and enjoy
