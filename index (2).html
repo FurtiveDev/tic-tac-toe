@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+  <!-- Don't use this in production: -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="text/babel">  
+    const SYMBOL_X = 'X';
+    const SYMBOL_O = 'O';
+
+    const computeDraw = (cells) =>{
+      if (cells[0] && cells[1] && cells[2] && cells[3] && cells[4] && cells[5] && cells[6] && cells[7] && cells[8]){
+        return cells
+      }
+      return null
+    }
+    const computeWinner = (cells) =>{
+      const winLines = [
+        [0,1,2],
+        [3,4,5],
+        [6,7,8],
+        [0,3,6],
+        [1,4,7],
+        [2,5,8],
+        [0,4,8],
+        [2,4,6],
+      ]
+      for (let i = 0;i<winLines.length;i++){
+        const [a,b,c] = winLines[i];
+        if(
+          cells[a]&&
+          cells[a] === cells[b] &&
+          cells[b] === cells[c]
+        ){
+          return [a,b,c]
+        }
+    }}
+
+    function useGameState(){
+      const[cells,setCells] = React.useState(
+      [null, null, null, 
+      null, null, null, 
+      null, null, null]
+    );
+      const[currentStep,setCurrentStep] = React.useState(SYMBOL_O);
+
+      const [winnerCondition,setWinnerCondition] = React.useState(null);
+      
+      const [stepNum,setStepNum] = React.useState(0)
+      const handleClearClick = () =>{
+        setCells(
+          [null, null, null, 
+          null, null, null, 
+          null, null, null])
+        setWinnerCondition(null);
+        setCurrentStep(SYMBOL_O);
+        setStepNum(0);
+      }
+      const handleCellClcik = (index) => {
+        if(cells[index] || winnerCondition){
+          return 0;
+        }
+        else{
+          const cellsCopy = cells.slice();
+          cellsCopy[index] = currentStep;
+          const winner = computeWinner(cellsCopy)
+          winner ? setWinnerCondition(winner): null
+          setCurrentStep(currentStep === SYMBOL_O ? SYMBOL_X : SYMBOL_O);
+          setCells(cellsCopy);
+          setStepNum(stepNum+1)
+        }
+      }
+      return({
+        cells,
+        currentStep,
+        winnerCondition,
+        stepNum,
+        handleCellClcik,
+        handleClearClick}
+      )
+    }
+
+    function App() {
+        const {
+        cells,
+        currentStep,
+        winnerCondition,
+        stepNum,
+        handleCellClcik,
+        handleClearClick
+        } = useGameState();
+
+      return ( 
+        <div className="game">
+          <GameInfo 
+          stepNum={stepNum}
+          winnerCondition={winnerCondition}
+          currentStep={currentStep}
+          />
+          <div className="game-field">
+            {cells.map((cell,index) =>{
+              const IsWinningCell = winnerCondition?.includes(index)
+              return <GameCell
+                IsWinningCell={IsWinningCell} 
+                onClick={()=>handleCellClcik(index)} 
+                cell={cell}
+                index ={index} 
+              />
+            })
+            }
+          </div>
+          <button className="ClearButton" onClick = {handleClearClick}>Очистка</button>
+        </div>
+      )
+    }
+    
+    function GameSymbol({symbol}){
+        const getSymbolClassName = (symbol) => {
+          if(symbol === SYMBOL_O) return 'symbol--o';
+          if(symbol === SYMBOL_X) return 'symbol--x';
+          return '';
+        } 
+        return <span className={`symbol ${getSymbolClassName(symbol)}`}>{symbol}</span>
+    }
+
+    function GameInfo({stepNum, winnerCondition,currentStep}){
+          if (winnerCondition){
+            return(<div>Победил: <GameSymbol symbol={currentStep===SYMBOL_O?SYMBOL_X:SYMBOL_O}/></div>)
+    }
+          else if (winnerCondition===null && stepNum!==9){
+            return(<div>Ход: <GameSymbol symbol={currentStep}/></div>)
+          }
+          else{
+            return("Ничья")
+          }
+    }
+    
+
+    function GameCell({IsWinningCell, onClick, cell,index}){
+      return <button 
+        className={`cell ${IsWinningCell ? 'cell--win': ''}`} 
+        onClick={() => onClick(index)}>{<GameSymbol symbol={cell}/>}
+      </button>
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+  <style>
+    html {
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .game {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 150px;
+      margin: 100px auto;
+      padding: 20px;
+      border: 1px solid black;
+    }
+
+    .game-info {
+      margin-bottom: 10px;
+    }
+
+    .game-field {
+      display: grid;
+      grid-template-columns: repeat(3, 30px);
+      grid-template-rows: repeat(3, 30px);
+      padding: 1px 0 0 1px;
+    }
+
+    .cell {
+      border: 1px solid grey;
+      margin: -1px 0 0 -1px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: transparent;
+    }
+
+    .cell--win {
+      background: rgba(255, 0, 0, 0.1);
+    }
+
+    .symbol {
+      font-size: 20px;
+      line-height: 24px;
+    }
+
+    .symbol--x {
+      color: red;
+    }
+
+    .symbol--o {
+      color: green;
+    }
+  </style>
+</body>
+
+</html>
